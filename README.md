@@ -7,7 +7,7 @@ This Streamlit app automatically analyzes a PDF resume to:
 - Summarize resume content
 - Visualize skills with a word cloud
 
-🔗 **[Try it Live on Streamlit](https://askmyresume-ckttmciaxa67zpjxedd7nq.streamlit.app/)** *(add your link here)*
+🔗 **[Try it Live on Streamlit](https://askmyresume-ckttmciaxa67zpjxedd7nq.streamlit.app/)** 
 
 ---
 
