@@ -1,9 +1,12 @@
 import streamlit as st
 import pdfplumber
-import re
+import spacy
 from openai import OpenAI
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+
+# Load spaCy English model
+nlp = spacy.load("en_core_web_sm")
 
 # Initialize Groq-compatible OpenAI client
 client = OpenAI(
@@ -22,9 +25,28 @@ def extract_text_from_pdf(pdf_file):
                 full_text += text + "\n"
     return full_text
 
-def extract_skills(text, skills_list):
-    text_lower = text.lower()
-    return [skill for skill in skills_list if re.search(r'\b' + re.escape(skill.lower()) + r'\b', text_lower)]
+def extract_skills_spacy(text):
+    doc = nlp(text)
+    possible_skills = set()
+
+    # Extract noun chunks and proper nouns
+    for chunk in doc.noun_chunks:
+        if 1 <= len(chunk.text.split()) <= 3:
+            possible_skills.add(chunk.text.lower().strip())
+
+    for token in doc:
+        if token.pos_ in ["PROPN", "NOUN"] and not token.is_stop:
+            possible_skills.add(token.text.lower().strip())
+
+    # Match with known list to avoid noise
+    common_skills = [
+        "machine learning", "sql", "java", "python", "data structures",
+        "c++", "javascript", "deep learning", "nlp", "react",
+        "aws", "docker", "kubernetes", "git", "html", "css"
+    ]
+
+    matched = [skill for skill in possible_skills if skill in common_skills]
+    return matched
 
 def generate_questions(skills, num_questions):
     skills = skills or ["software development"]
@@ -50,8 +72,8 @@ def generate_questions(skills, num_questions):
 
     text = response.choices[0].message.content.strip()
     lines = text.split("\n")
-    questions = [line.strip() for line in lines if re.match(r"^\d+\.\s", line) or "?" in line]
-    return questions[:num_questions] 
+    questions = [line.strip() for line in lines if "?" in line]
+    return questions[:num_questions]
 
 def generate_summary(text):
     prompt = (
@@ -121,18 +143,13 @@ def main():
     st.subheader("📝 Resume Summary:")
     st.markdown(summary)
 
-    # Extract Common Technical Skills
-    common_skills = [
-        "machine learning", "sql", "java", "python", "data structures",
-        "c++", "javascript", "deep learning", "nlp", "react",
-        "aws", "docker", "kubernetes", "git", "html", "css"
-    ]
-    skills = extract_skills(resume_text, common_skills)
+    # Skill Extraction with spaCy
+    skills = extract_skills_spacy(resume_text)
 
     if skills:
         st.write(f"**✅ Extracted Skills:** {', '.join(skills)}")
     else:
-        st.info("⚠️ No predefined skills found; using general software development.")
+        st.info("⚠️ No technical skills found; using general software development.")
 
     show_wordcloud(skills)
 
@@ -147,10 +164,10 @@ def main():
         questions = generate_questions(skills, num_questions)
 
     st.subheader("📝 Generated Interview Questions:")
-    for i, q in enumerate(questions, 1):
+    for q in questions:
         st.markdown(f"* {q}")
 
-    questions_text = "\n".join([f"{q}" for q in questions])
+    questions_text = "\n".join(questions)
     st.subheader("📄 Download or Copy Questions")
 
     st.download_button(
