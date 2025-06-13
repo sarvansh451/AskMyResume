@@ -32,9 +32,18 @@ This Streamlit app automatically analyzes a PDF resume to:
 
 ---
 
-## 📂 Project Structure
+## 📁 Project Structure
 
-├── app.py # Main Streamlit app
-├── requirements.txt # Python dependencies
-├── README.md # Project documentation
+```
+resume-question-generator/
+│
+├── app.py                     # 🚀 Main Streamlit application
+├── requirements.txt           # 📦 Required Python packages
+├── README.md                  # 📘 This documentation file
+│
+├── .streamlit/                # 🔐 Secrets folder for API key
+  └── secrets.toml           #     Groq API key stored securely here
+
+ 
+```
 
